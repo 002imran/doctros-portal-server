@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
 
@@ -19,6 +20,7 @@ async function run(){
     try{
         const appointmentOptionCollection = client.db('doctorsPortal').collection('appointmentOptions');
         const bookingsCollection = client.db('doctorsPortal').collection('booking');
+        const usersCollection = client.db('doctorsPortal').collection('users');
         
         //use aggregate to query multiple collection and then merge data
         app.get('/appointmentOptions', async(req, res)=>{
@@ -52,7 +54,6 @@ async function run(){
 
         app.post('/bookings', async(req, res)=>{
             const booking = req.body;
-            console.log(booking);
             const query = {
                 appointmentDate: booking.appointmentDate,
                 email: booking.email,
@@ -66,8 +67,32 @@ async function run(){
             }
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
+        });
+
+        //api for conditionally check user alreaday have or not and given jwt token 
+        app.get('/jwt', async(req, res)=>{
+            const email = req.query.email;
+            const query = {email: email};
+            const user = await usersCollection.findOne(query);
+            if(user){
+                const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {expiresIn: '1h'})
+                return res.send({accessToken: token})
+            }
+            
+            res.status(403).send({accessToken: ''});
+
+        })
+
+
+        //api to save user data in database
+        app.post('/users', async(req, res)=>{
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
         })
     }
+
+
     finally{
 
     }

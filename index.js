@@ -94,6 +94,14 @@ async function run(){
             res.send(bookings);
         })
 
+        //api to get boookings by id
+        app.get('/bookings/:id', async(req, res) =>{
+            const id = req.params.id;
+            const query = { _id: ObjectId(id)};
+            const booking = await bookingsCollection.findOne(query);
+            res.send(booking);
+        })
+
 
         app.post('/bookings', async(req, res)=>{
             const booking = req.body;
@@ -163,17 +171,17 @@ async function run(){
         });
 
         // temporary to updata price field on appointment options
-        app.get('/addPrice', async(req, res)=>{
-            const filter = {}
-            const options = { upsert : true}
-            const updateDoc = {
-                $set: {
-                    price: 99
-                }
-            }
-            const result = await appointmentOptionCollection.updateMany(filter, updateDoc, options);
-            res.send(result);
-        })
+        // app.get('/addPrice', async(req, res)=>{
+        //     const filter = {}
+        //     const options = { upsert : true}
+        //     const updateDoc = {
+        //         $set: {
+        //             price: 99
+        //         }
+        //     }
+        //     const result = await appointmentOptionCollection.updateMany(filter, updateDoc, options);
+        //     res.send(result);
+        // })
 
         //api to get doctors data
         app.get('/doctors', verifyJWT, verifyAdmin, async (req, res) => {

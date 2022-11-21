@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const port = process.env.PORT || 5000;
 const app = express();
@@ -119,6 +120,25 @@ async function run(){
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         });
+
+        // api-Server side payment intents API to get client Secret from stripe
+        app.post('/create-payment-intent', async(req, res)=>{
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            })
+        })
+
 
         //api for conditionally check user alreaday have or not and given jwt token 
         app.get('/jwt', async(req, res)=>{

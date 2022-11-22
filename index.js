@@ -41,6 +41,8 @@ async function run(){
         const bookingsCollection = client.db('doctorsPortal').collection('booking');
         const usersCollection = client.db('doctorsPortal').collection('users');
         const doctorsCollection = client.db('doctorsPortal').collection('doctors');
+        const paymentsCollection = client.db('doctorsPortal').collection('payments');
+
 
         // verify admin ..this process after make sure verifyJWT
         const verifyAdmin = async(req, res, next) =>{
@@ -137,6 +139,22 @@ async function run(){
             res.send({
                 clientSecret: paymentIntent.client_secret,
             })
+        })
+
+        //api to post payments
+        app.post('/payments', async(req, res)=>{
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId 
+            const filter = {_id: ObjectId(id)}
+            const updatedDoc = {
+                $set:{
+                    paid: true,
+                    transactionId: payment.transactionId 
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
+            res.send(result);
         })
 
 
